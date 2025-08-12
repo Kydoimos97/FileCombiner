@@ -1,0 +1,7 @@
+FileCombiner.Tests/TestFixtures/*.pdf filter=lfs diff=lfs merge=lfs -text
+FileCombiner.Tests/TestFixtures/*.doc filter=lfs diff=lfs merge=lfs -text
+FileCombiner.Tests/TestFixtures/*.xls filter=lfs diff=lfs merge=lfs -text
+FileCombiner.Tests/TestFixtures/*.xlsx filter=lfs diff=lfs merge=lfs -text
+FileCombiner.Tests/TestFixtures/*.ppt filter=lfs diff=lfs merge=lfs -text
+FileCombiner.Tests/TestFixtures/*.pptx filter=lfs diff=lfs merge=lfs -text
+FileCombiner.Tests/TestFixtures/*.rtf filter=lfs diff=lfs merge=lfs -text
