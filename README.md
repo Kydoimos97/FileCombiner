@@ -26,7 +26,7 @@ Pre-built binaries are available from the [releases page](../../releases) for:
 ### Build from Source
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Kydoimos97/FileCombiner.git
 cd FileCombiner
 dotnet publish -c Release -r win-x64 --self-contained
 ```
