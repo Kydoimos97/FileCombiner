@@ -1,0 +1,7 @@
+<linker>
+    <assembly fullname="FileCombiner">
+        <type fullname="FileCombiner.CLI.CommandLineOptions" preserve="all"/>
+    </assembly>
+    <!-- optional: keep more if needed -->
+<!--    <assembly fullname="CommandLine" />-->
+</linker>
