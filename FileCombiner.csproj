@@ -5,9 +5,12 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
         <PublishTrimmed>true</PublishTrimmed>
+
+        <AssemblyName>filecombiner</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
