@@ -1,0 +1,86 @@
+name: Publish filecombiner (multi-RID)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+env:
+  DOTNET_VERSION: "9.0.x"
+  PROJECT: "FileCombiner.csproj"
+  CONFIG: "Release"
+  PUBLISH_TRIMMED: "true"   
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rid: [ "win-x64", "win-arm64", "linux-x64", "linux-arm64", "osx-x64", "osx-arm64" ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore ${{ env.PROJECT }}
+
+      - name: Publish (${{ matrix.rid }})
+        shell: bash
+        run: |
+          OUT="artifacts/${{ matrix.rid }}"
+          mkdir -p "$OUT"
+
+          dotnet publish ${{ env.PROJECT }} -c ${{ env.CONFIG }} -r ${{ matrix.rid }} \
+            -p:SelfContained=true \
+            -p:PublishSingleFile=true \
+            -p:PublishTrimmed=${{ env.PUBLISH_TRIMMED }} \
+            -p:TargetName=filecombiner \
+            -o "$OUT"
+
+          # verify the expected binary exists
+          BIN="filecombiner"
+          if [[ "${{ startsWith(matrix.rid, 'win') }}" == "true" ]]; then BIN="${BIN}.exe"; fi
+          test -f "$OUT/$BIN" || (echo "Expected $OUT/$BIN not found" && ls -la "$OUT" && exit 1)
+
+          # zip the per-RID folder
+          (cd artifacts && zip -r "filecombiner-${{ matrix.rid }}.zip" "${{ matrix.rid }}")
+
+      - name: Upload artifact (${{ matrix.rid }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: filecombiner-${{ matrix.rid }}
+          path: artifacts/filecombiner-${{ matrix.rid }}.zip
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Create/Update Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/filecombiner-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
