@@ -5,7 +5,10 @@ on:
   push:
     tags:
       - "v*"
-
+      
+permissions:
+  contents: write
+  
 env:
   DOTNET_VERSION: "9.0.x"
   PROJECT: "FileCombiner.csproj"
