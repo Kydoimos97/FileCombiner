@@ -1,0 +1,31 @@
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+  
+  status:
+    project:
+      default:
+        target: 70%
+        threshold: 2%
+        base: auto
+    patch:
+      default:
+        target: 70%
+        threshold: 2%
+
+comment:
+  layout: "reach,diff,flags,files,footer"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+
+ignore:
+  - "FileCombiner.Tests/**"
+  - "**/obj/**"
+  - "**/bin/**"
+  - "**/*.DotSettings.user"
+  - "**/*.g.cs"
+  - "**/GlobalUsings.g.cs"
+  - "**/*.AssemblyInfo.cs"
