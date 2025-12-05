@@ -36,8 +36,11 @@ dotnet publish -c Release -r win-x64 --self-contained
 ### Basic Usage
 
 ```bash
-# Combine all text files in current directory
-filecombiner .
+# Combine all text files in current directory (uses sensible defaults)
+filecombiner
+
+# Combine files from a specific directory
+filecombiner ./src
 
 # Combine specific file types
 filecombiner ./src -e .cs,.js,.ts
@@ -47,19 +50,19 @@ filecombiner ./project -o combined-output.md
 
 # Preview what would be processed (dry run)
 filecombiner ./src --dry-run
+
+# Interactive mode (prompts for configuration)
+filecombiner --interactive
 ```
 
 ### Advanced Options
 
 ```bash
-# Include/exclude patterns with glob support
-filecombiner ./src --include "**/*.cs,**/*.js" --exclude "**/bin/**,**/obj/**"
+# Exclude patterns with glob support
+filecombiner ./src --exclude "**/bin/**,**/obj/**,**/node_modules/**"
 
-# Limit depth and file count
-filecombiner ./project --max-depth 3 --max-files 50
-
-# Compact mode (remove comments/docstrings)
-filecombiner ./src -c --no-tree
+# Limit directory depth
+filecombiner ./project --max-depth 3
 
 # Verbose output for debugging
 filecombiner ./src -v
@@ -69,44 +72,53 @@ filecombiner ./src -v
 
 | Option | Short | Description | Default |
 |--------|-------|-------------|---------|
-| `directory` | | Source directory to scan | **Required** |
+| `directory` | | Source directory to scan | `.` (current directory) |
 | `--output` | `-o` | Output file path | Copy to clipboard |
-| `--extensions` | `-e` | File extensions (comma-separated, `*` for auto-detect) | `*` |
+| `--extensions` | `-e` | File extensions (comma-separated, `*` for auto-detect) | `*` (auto-detect) |
 | `--max-depth` | `-r` | Maximum directory depth | `5` |
-| `--include` | | Include files matching patterns | `**/*` |
-| `--exclude` | | Exclude files/dirs matching patterns | |
-| `--ignore-dirs` | | Additional directories to ignore | |
-| `--compact` | `-c` | Remove comments and docstrings | `false` |
-| `--no-tree` | | Don't include directory tree in output | `false` |
-| `--max-files` | | Maximum number of files to process | `1000` |
-| `--max-file-size` | | Maximum file size in bytes | `10MB` |
+| `--exclude` | | Exclude files/dirs matching glob patterns | |
 | `--dry-run` | | Show what would be processed | `false` |
-| `--verbose` | `-v` | Enable verbose output | `false` |
+| `--verbose` | `-v` | Enable detailed logging | `false` |
+| `--interactive` | `-i` | Enter interactive mode with prompts | `false` |
+| `--help` | `-h` | Show help message | |
+
+### Deprecated Options (Still Supported)
+
+The following options are deprecated but still work for backward compatibility:
+
+- `--include` - Use `--extensions` instead
+- `--ignore-dirs` - Use `--exclude` with directory patterns instead
+- `--compact` - Feature removed
+- `--no-tree` - Tree generation is now always included
+- `--max-files` - Now uses default of 1000
+- `--max-file-size` - Now uses default of 10MB
+
+See [CHANGELOG.md](CHANGELOG.md) for migration guide.
 
 ## Examples
 
 ### Code Review Preparation
 ```bash
 # Combine all source files for review
-filecombiner ./src -e .cs,.js,.ts -o review-$(date +%Y%m%d).md
+filecombiner ./src -e .cs,.js,.ts -o review.md
 ```
 
 ### Documentation Generation
 ```bash
 # Include only documentation files
-filecombiner ./docs --include "**/*.md,**/*.rst" --max-depth 2
+filecombiner ./docs -e .md,.rst --max-depth 2
 ```
 
 ### Project Snapshot
 ```bash
 # Create complete project snapshot excluding build artifacts
-filecombiner . --exclude "**/bin/**,**/obj/**,**/node_modules/**" -c
+filecombiner . --exclude "**/bin/**,**/obj/**,**/node_modules/**"
 ```
 
 ### Large Codebase Analysis
 ```bash
-# Process large codebase with limits
-filecombiner ./enterprise-app --max-files 100 --max-file-size 1048576 -v
+# Process large codebase with verbose output
+filecombiner ./enterprise-app -v
 ```
 
 ## Output Format

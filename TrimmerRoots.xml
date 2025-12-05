@@ -3,5 +3,5 @@
         <type fullname="FileCombiner.CLI.CommandLineOptions" preserve="all"/>
     </assembly>
     <!-- optional: keep more if needed -->
-<!--    <assembly fullname="CommandLine" />-->
+    <!--    <assembly fullname="CommandLine" />-->
 </linker>
