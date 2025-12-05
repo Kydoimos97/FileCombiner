@@ -32,12 +32,16 @@ jobs:
     - name: Run tests with coverage
       run: dotnet test --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
       
+    - name: List coverage files (debug)
+      if: matrix.os == 'ubuntu-latest'
+      run: find ./coverage -name "*.xml" -type f
+      
     - name: Upload coverage reports to Codecov
       if: matrix.os == 'ubuntu-latest'
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./coverage/**/coverage.cobertura.xml
+        directory: ./coverage
         flags: unittests
         fail_ci_if_error: false
         verbose: true
