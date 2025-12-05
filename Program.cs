@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using FileCombiner.Modules;
 using FileCombiner.Modules.CLI;
 using FileCombiner.Modules.Configuration;
@@ -12,6 +13,7 @@ namespace FileCombiner;
 ///     Main program entry point with dependency injection and CLI orchestration.
 /// </summary>
 // ReSharper disable once ClassNeverInstantiated.Global
+[ExcludeFromCodeCoverage] // Entry point - not unit testable
 internal class Program
 {
     private static string Esc(string s)

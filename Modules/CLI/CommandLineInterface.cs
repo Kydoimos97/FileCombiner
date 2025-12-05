@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using CommandLine;
 using FileCombiner.Modules.Configuration;
@@ -56,6 +57,7 @@ public static class CommandLineInterface
         return opts;
     }
 
+    [ExcludeFromCodeCoverage] // Interactive console input - not unit testable
     public static CommandLineOptions RunInteractive()
     {
         try
