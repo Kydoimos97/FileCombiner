@@ -30,28 +30,25 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
       
-    - name: Install dotnet-coverage
-      run: dotnet tool install --global dotnet-coverage
-      
     - name: Build
       run: dotnet build --configuration Release --no-restore
       
     - name: Run tests with coverage
-      run: dotnet-coverage collect "dotnet test --configuration Release --no-build --verbosity normal" -f xml -o coverage.xml
+      run: dotnet test FileCombiner.Tests/FileCombiner.Tests.csproj /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../coverage.cobertura.xml --configuration Release --no-build --verbosity quiet
       
     - name: List coverage files (debug)
       if: matrix.os == 'ubuntu-latest'
       run: |
         echo "Searching for coverage files..."
         ls -la *.xml || echo "No XML files found"
-        cat coverage.xml | head -20 || echo "Cannot read coverage.xml"
+        cat coverage.cobertura.xml | head -20 || echo "Cannot read coverage.cobertura.xml"
       
     - name: Upload coverage reports to Codecov
       if: matrix.os == 'ubuntu-latest'
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./coverage.xml
+        files: ./coverage.cobertura.xml
         flags: unittests
         fail_ci_if_error: false
         verbose: true

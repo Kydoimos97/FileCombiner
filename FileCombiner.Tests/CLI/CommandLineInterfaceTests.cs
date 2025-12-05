@@ -90,4 +90,143 @@ public class CommandLineInterfaceTests
         var exception = Record.Exception(() => new Markup(escaped));
         Assert.Null(exception);
     }
+
+    [Fact]
+    public void Parse_WithValidDirectory_ReturnsOptions()
+    {
+        // Arrange
+        var args = new[] { "./src" };
+        
+        // Act
+        var result = CommandLineInterface.Parse(args);
+        
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("./src", result.Directory);
+    }
+
+    [Fact]
+    public void Parse_WithExtensions_ReturnsOptions()
+    {
+        // Arrange
+        var args = new[] { "./src", "-e", ".cs,.js" };
+        
+        // Act
+        var result = CommandLineInterface.Parse(args);
+        
+        // Assert
+        Assert.NotNull(result);
+        Assert.Contains(".cs", result.Extensions);
+        Assert.Contains(".js", result.Extensions);
+    }
+
+    [Fact]
+    public void Parse_WithOutputFile_ReturnsOptions()
+    {
+        // Arrange
+        var args = new[] { "./src", "-o", "output.md" };
+        
+        // Act
+        var result = CommandLineInterface.Parse(args);
+        
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("output.md", result.OutputFile);
+    }
+
+    [Fact]
+    public void Parse_WithDryRun_ReturnsOptions()
+    {
+        // Arrange
+        var args = new[] { "./src", "--dry-run" };
+        
+        // Act
+        var result = CommandLineInterface.Parse(args);
+        
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.DryRun);
+    }
+
+    [Fact]
+    public void Parse_WithVerbose_ReturnsOptions()
+    {
+        // Arrange
+        var args = new[] { "./src", "--verbose" };
+        
+        // Act
+        var result = CommandLineInterface.Parse(args);
+        
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.Verbose);
+    }
+
+    [Fact]
+    public void Parse_WithMaxDepth_ReturnsOptions()
+    {
+        // Arrange
+        var args = new[] { "./src", "--max-depth", "3" };
+        
+        // Act
+        var result = CommandLineInterface.Parse(args);
+        
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(3, result.MaxDepth);
+    }
+
+    [Fact]
+    public void Parse_WithExcludePattern_ReturnsOptions()
+    {
+        // Arrange
+        var args = new[] { "./src", "--exclude", "**/bin/**" };
+        
+        // Act
+        var result = CommandLineInterface.Parse(args);
+        
+        // Assert
+        Assert.NotNull(result);
+        Assert.Contains("**/bin/**", result.ExcludePatterns);
+    }
+
+    [Fact]
+    public void Parse_WithNoTree_ReturnsOptions()
+    {
+        // Arrange
+        var args = new[] { "./src", "--no-tree" };
+        
+        // Act
+        var result = CommandLineInterface.Parse(args);
+        
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.NoTree);
+    }
+
+    [Fact]
+    public void Parse_WithInvalidArgs_ReturnsNull()
+    {
+        // Arrange
+        var args = new[] { "--invalid-option" };
+        
+        // Act
+        var result = CommandLineInterface.Parse(args);
+        
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Parse_WithHelpFlag_ReturnsNull()
+    {
+        // Arrange
+        var args = new[] { "--help" };
+        
+        // Act
+        var result = CommandLineInterface.Parse(args);
+        
+        // Assert
+        Assert.Null(result);
+    }
 }

@@ -11,6 +11,10 @@
         <PublishTrimmed>true</PublishTrimmed>
 
         <AssemblyName>filecombiner</AssemblyName>
+        
+        <!-- Debug symbols for code coverage -->
+        <DebugType>portable</DebugType>
+        <DebugSymbols>true</DebugSymbols>
     </PropertyGroup>
 
     <ItemGroup>
