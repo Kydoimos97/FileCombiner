@@ -30,28 +30,21 @@ jobs:
       run: dotnet build --configuration Release --no-restore
       
     - name: Run tests with coverage
-      run: dotnet test --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+      run: dotnet test --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
       
     - name: List coverage files (debug)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        echo "Checking for coverage directory..."
-        if [ -d "./coverage" ]; then
-          echo "Coverage directory exists"
-          find ./coverage -type f -name "*.xml"
-          echo "Directory structure:"
-          ls -R ./coverage
-        else
-          echo "Coverage directory not found"
-          ls -la
-        fi
+        echo "Searching for coverage files..."
+        find . -name "coverage.cobertura.xml" -type f
+        echo "All XML files in test results:"
+        find . -path "*/TestResults/*" -name "*.xml" -type f
       
     - name: Upload coverage reports to Codecov
       if: matrix.os == 'ubuntu-latest'
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        directory: ./coverage
         flags: unittests
         fail_ci_if_error: false
         verbose: true
