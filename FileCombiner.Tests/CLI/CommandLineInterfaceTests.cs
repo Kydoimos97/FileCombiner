@@ -116,6 +116,7 @@ public class CommandLineInterfaceTests
         
         // Assert
         Assert.NotNull(result);
+        Assert.NotNull(result.Extensions);
         Assert.Contains(".cs", result.Extensions);
         Assert.Contains(".js", result.Extensions);
     }
@@ -187,6 +188,7 @@ public class CommandLineInterfaceTests
         
         // Assert
         Assert.NotNull(result);
+        Assert.NotNull(result.ExcludePatterns);
         Assert.Contains("**/bin/**", result.ExcludePatterns);
     }
 
