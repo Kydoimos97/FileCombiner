@@ -7,7 +7,6 @@ namespace FileCombiner.Modules.CLI;
 ///     Command line options using CommandLineParser library (no defaults here).
 ///     Defaults live in AppConfig.CreateDefault (SSOT).
 /// </summary>
-[Verb("combine", true, HelpText = "Combine files from a directory into a single reference document")]
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public class CommandLineOptions
 {
