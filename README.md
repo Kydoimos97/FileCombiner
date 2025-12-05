@@ -1,5 +1,10 @@
 # FileCombiner
 
+[![CI](https://github.com/Kydoimos97/FileCombiner/actions/workflows/ci.yml/badge.svg)](https://github.com/Kydoimos97/FileCombiner/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Kydoimos97/FileCombiner/branch/main/graph/badge.svg)](https://codecov.io/gh/Kydoimos97/FileCombiner)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/download)
+
 A high-performance .NET CLI tool that combines multiple files from a directory structure into a single reference document. Perfect for code reviews, documentation, or sharing project snapshots with AI assistants.
 
 ## Features
@@ -182,13 +187,46 @@ The tool automatically ignores common build and cache directories:
 - **Fast Scanning**: Optimized directory traversal with early termination
 - **Size Limits**: Built-in protection against processing huge files
 
+## Testing
+
+The project includes comprehensive test coverage with xUnit and FsCheck for property-based testing.
+
+```bash
+# Run all tests
+dotnet test
+
+# Run tests with coverage
+dotnet test --collect:"XPlat Code Coverage"
+
+# Run specific test category
+dotnet test --filter "FullyQualifiedName~PathResolutionTests"
+```
+
+### Test Coverage
+
+- **Unit Tests**: Core functionality and edge cases
+- **Property-Based Tests**: Correctness guarantees with FsCheck (100+ iterations per property)
+- **Integration Tests**: End-to-end scenarios
+
+Current test coverage: 27 tests covering all critical paths.
+
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Follow existing code patterns and SOLID principles
-4. Add tests for new functionality
-5. Submit a pull request
+4. Add tests for new functionality (required for PR approval)
+5. Ensure all tests pass (`dotnet test`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+### Code Quality Requirements
+
+- All tests must pass
+- Code coverage should not decrease
+- Follow C# coding conventions
+- Add XML documentation for public APIs
 
 ## License
 
