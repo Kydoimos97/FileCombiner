@@ -34,7 +34,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore
       
     - name: Run tests with coverage
-      run: dotnet test FileCombiner.Tests/FileCombiner.Tests.csproj /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../coverage.cobertura.xml --configuration Release --no-build --verbosity quiet
+      run: dotnet test FileCombiner.Tests/FileCombiner.Tests.csproj /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../coverage.cobertura.xml --configuration Release --verbosity quiet
       
     - name: List coverage files (debug)
       if: matrix.os == 'ubuntu-latest'
