@@ -3,6 +3,14 @@
 /obj/
 /*.DotSettings.user
 
+# Kiro IDE files
+.kiro/
+
+# Coverage reports
+coverage*.xml
+coveragereport/
+TestResults/
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
