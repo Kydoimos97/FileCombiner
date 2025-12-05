@@ -1,37 +1,57 @@
 ﻿using System.Text;
-using CommandLine;
-using FileCombiner.CLI;
-using FileCombiner.Configuration;
-using FileCombiner.Models;
-using FileCombiner.Services;
+using FileCombiner.Modules;
+using FileCombiner.Modules.CLI;
+using FileCombiner.Modules.Configuration;
+using FileCombiner.Modules.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Spectre.Console;
 
 namespace FileCombiner;
 
 /// <summary>
-/// Main program entry point with dependency injection setup
+///     Main program entry point with dependency injection and CLI orchestration.
 /// </summary>
-class Program
+// ReSharper disable once ClassNeverInstantiated.Global
+internal class Program
 {
-    static string Esc(string s) => Markup.Escape(s);
+    private static string Esc(string s)
+    {
+        return Markup.Escape(s);
+    }
 
-    static async Task<int> Main(string[] args)
+    /// <summary>
+    ///     Wraps an async operation with timeout detection to diagnose hangs.
+    /// </summary>
+    private static async Task<T> WithTimeoutDetection<T>(Task<T> task, string operationName, int timeoutSeconds = 30)
+    {
+        var timeoutTask = Task.Delay(TimeSpan.FromSeconds(timeoutSeconds));
+        var completedTask = await Task.WhenAny(task, timeoutTask);
+        
+        if (completedTask == timeoutTask)
+        {
+            AnsiConsole.MarkupLine($"[red]WARNING:[/] Operation '{operationName}' has been running for {timeoutSeconds} seconds...");
+            AnsiConsole.MarkupLine("[yellow]This may indicate a deadlock or hang. Waiting for completion...[/]");
+            return await task; // Continue waiting but user is informed
+        }
+        
+        return await task;
+    }
+
+    private static async Task<int> Main(string[] args)
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         Console.OutputEncoding = Encoding.UTF8;
-        // Parse command line arguments
-        var parseResult = Parser.Default.ParseArguments<CommandLineOptions>(args);
 
-        return await parseResult.MapResult(
-            async options => await RunApplication(options),
-            _ => Task.FromResult(1)
-        );
-    }
+        // Parse command line options
+        var options = CommandLineInterface.Parse(args);
+        if (options == null) return 1;
 
-    private static async Task<int> RunApplication(CommandLineOptions options)
-    {
+        // If interactive mode is requested, run interactive prompts
+        if (options.Interactive)
+        {
+            options = CommandLineInterface.RunInteractive();
+        }
+
         try
         {
             // Validate directory
@@ -41,43 +61,92 @@ class Program
                 return 1;
             }
 
-            // Setup dependency injection
-            var services = new ServiceCollection();
-            ConfigureServices(services, options);
-            // Create configuration
+            // Build app configuration from CLI
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: Building app configuration from command line options...[/]");
+            
             var config = AppConfig.FromCommandLine(options);
+            
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: App configuration created successfully[/]");
 
-            // Add dependent Service
-            AddTextParser(services, config);
+            // Setup dependency injection
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: Setting up dependency injection container...[/]");
+            
+            var services = new ServiceCollection();
+            
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: Configuring services...[/]");
+            
+            RunTimeUtils.ConfigureServices(services, options);
+            
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: Adding text parser services...[/]");
+            
+            RunTimeUtils.AddTextParser(services, config);
 
-            // Build Service Provider
-            await using var serviceProvider = services.BuildServiceProvider();
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: Building service provider...[/]");
+            else
+                AnsiConsole.MarkupLine("[grey]Building service provider...[/]");
+            
+            await using var provider = services.BuildServiceProvider();
+            
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: Service provider built successfully[/]");
+            else
+                AnsiConsole.MarkupLine("[grey]Service provider built.[/]");
 
-            // Get services
-            var discoveryService = serviceProvider.GetRequiredService<IFileDiscoveryService>();
-            var combinerService = serviceProvider.GetRequiredService<IFileCombinerService>();
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: Resolving IFileDiscoveryService...[/]");
+            
+            var discoveryService = await Task.Run(() => provider.GetRequiredService<IFileDiscoveryService>());
+            
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: IFileDiscoveryService resolved successfully[/]");
+            
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: Resolving IFileCombinerService...[/]");
+            
+            var combinerService = await Task.Run(() => provider.GetRequiredService<IFileCombinerService>());
+            
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: IFileCombinerService resolved successfully[/]");
+            else
+                AnsiConsole.MarkupLine("[grey]Services resolved successfully.[/]");
 
-            // STEP 1: Discover files first - show what we found
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: Starting file discovery...[/]");
+            else
+                AnsiConsole.MarkupLine("[grey]Starting discovery...[/]");
+
+            // STEP 1: Discover files
             AnsiConsole.MarkupLine("[bold]Discovering files...[/]");
-            var discoveryResult = await discoveryService.DiscoverFilesAsync(config);
+            
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: Calling DiscoverFilesAsync...[/]");
+            
+            var discoveryResult = await WithTimeoutDetection(
+                discoveryService.DiscoverFilesAsync(config),
+                "File Discovery",
+                30
+            ).ConfigureAwait(false);
+            
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: DiscoverFilesAsync completed successfully[/]");
+            else
+                AnsiConsole.MarkupLine("[grey]Finished discovery...[/]");
+
 
             if (discoveryResult.ProcessedFiles.Count == 0)
             {
                 AnsiConsole.MarkupLine("[yellow]No files found to process.[/]");
                 return 0;
             }
-            else
-            {
-                AnsiConsole.WriteLine();
-                AnsiConsole.MarkupLine($"[bold]Summary:[/]");
-                AnsiConsole.MarkupLine($"  📁 Directories scanned: [cyan]{discoveryResult.FoundDirs}[/]");
-                AnsiConsole.MarkupLine($"  📄 Files to combine: [yellow]{discoveryResult.ProcessedFiles.Count}[/]");
-                AnsiConsole.MarkupLine($"  📊 Total size: [cyan]{discoveryResult.TotalSize:N0}[/] bytes");
-                AnsiConsole.WriteLine();
-            }
 
-
-
+            // STEP 2: Print summary
+            CommandLineInterface.PrintSummary(discoveryResult);
 
             if (config.DryRun)
             {
@@ -85,98 +154,40 @@ class Program
                 return 0;
             }
 
-            // STEP 2: Now that user can see what files were found, ask for confirmation
-            if (!AnsiConsole.Confirm($"Proceed with combining these {discoveryResult.ProcessedFiles.Count} files?"))
+            // Confirm action
+            if (!await AnsiConsole.ConfirmAsync($"Proceed with combining these {discoveryResult.ProcessedFiles.Count} files?"))
             {
                 AnsiConsole.MarkupLine("[yellow]Operation cancelled[/]");
                 return 0;
             }
-            AnsiConsole.WriteLine();
-            // STEP 3: User said yes, now actually combine the files
-            AnsiConsole.MarkupLine("[bold]Combining files...[/]");
-            var result = await combinerService.CombineFilesAsync(config, discoveryResult);
 
-            // STEP 4: Output result
-            await OutputResult(result, config);
+            AnsiConsole.WriteLine();
+
+            // STEP 3: Combine files
+            AnsiConsole.MarkupLine("[bold]Combining files...[/]");
+            
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: Calling CombineFilesAsync...[/]");
+            
+            var combined = await WithTimeoutDetection(
+                combinerService.CombineFilesAsync(config, discoveryResult),
+                "File Combining",
+                60
+            ).ConfigureAwait(false);
+            
+            if (options.Verbose)
+                AnsiConsole.MarkupLine("[dim]DEBUG: CombineFilesAsync completed successfully[/]");
+
+            // STEP 4: Output result (delegated to CLI)
+            await CommandLineInterface.OutputResult(combined, config);
 
             return 0;
         }
         catch (Exception ex)
         {
             AnsiConsole.MarkupLine($"[red]Error:[/] {Esc(ex.Message)}");
-            if (options.Verbose)
-            {
-                AnsiConsole.WriteException(ex);
-            }
+            AnsiConsole.WriteException(ex, ExceptionFormats.ShortenPaths | ExceptionFormats.ShortenTypes);
             return 1;
-        }
-    }
-
-    private static void ConfigureServices(ServiceCollection services, CommandLineOptions options)
-    {
-        // Logging
-        services.AddLogging(builder =>
-        {
-            builder.AddConsole();
-            builder.SetMinimumLevel(options.Verbose ? LogLevel.Debug : LogLevel.Information);
-        });
-
-        // Application services - Dependency Injection pattern
-        services.AddTransient<ITextDetectionService, TextDetectionService>();
-        services.AddTransient<IFileDiscoveryService, FileDiscoveryService>();
-        services.AddTransient<ILanguageDetectionService, LanguageDetectionService>();
-        services.AddTransient<IFileCombinerService, FileCombinerService>();
-    }
-
-    private static void AddTextParser(ServiceCollection services, AppConfig config)
-    {
-        services.AddSingleton<ITextMatcherService>(_ = new FileSystemTextGlobber(config.IncludePatterns, config.ExcludePatterns));
-    }
-
-    private static async Task OutputResult(CombinedFilesData data, AppConfig config)
-    {
-        if (string.IsNullOrEmpty(data.FinalContent))
-        {
-            AnsiConsole.MarkupLine("[yellow]No content to output[/]");
-            return;
-        }
-
-        if (!string.IsNullOrEmpty(config.OutputFile))
-        {
-            try
-            {
-                await File.WriteAllTextAsync(config.OutputFile, data.FinalContent, Encoding.UTF8);
-                AnsiConsole.MarkupLine($"[yellow]💾 Saved to:[/] {config.OutputFile}");
-            }
-            catch (Exception ex)
-            {
-                AnsiConsole.MarkupLine($"[red]Error saving file:[/] {Esc(ex.Message)}");
-                AnsiConsole.MarkupLine("[yellow]📋 Copying to clipboard instead...[/]");
-                await CopyToClipboard(data);
-            }
-        }
-        else
-        {
-            await CopyToClipboard(data);
-        }
-    }
-
-    private static async Task CopyToClipboard(CombinedFilesData data)
-    {
-        try
-        {
-
-            await TextCopy.ClipboardService.SetTextAsync(data.FinalContent);
-            AnsiConsole.MarkupLine($"📋 Output [yellow]copied[/] to clipboard ([magenta]{data.TotalTokens:N0}[/] Tokens)");
-        }
-        catch (Exception ex)
-        {
-            // Fallback to temp file like before
-            var tempFile = Path.Combine(Path.GetTempPath(), $"combined-files-{DateTime.Now:yyyyMMdd-HHmmss}.md");
-            await File.WriteAllTextAsync(tempFile, data.FinalContent, Encoding.UTF8);
-
-            AnsiConsole.MarkupLine($"[yellow]⚠️ Clipboard failed, saved to:[/] {tempFile}");
-            AnsiConsole.MarkupLine($"[dim]Error: {ex.Message}[/]");
         }
     }
 }
