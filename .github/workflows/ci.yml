@@ -12,8 +12,11 @@ concurrency:
 
 jobs:
   test:
-    name: Test and Coverage
-    runs-on: ubuntu-latest
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         
     steps:
     - name: Checkout code
@@ -37,12 +40,14 @@ jobs:
       run: dotnet-coverage collect "dotnet test --configuration Release --no-build --verbosity normal" -f xml -o coverage.xml
       
     - name: List coverage files (debug)
+      if: matrix.os == 'ubuntu-latest'
       run: |
         echo "Searching for coverage files..."
         ls -la *.xml || echo "No XML files found"
         cat coverage.xml | head -20 || echo "Cannot read coverage.xml"
       
     - name: Upload coverage reports to Codecov
+      if: matrix.os == 'ubuntu-latest'
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
