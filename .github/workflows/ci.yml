@@ -30,7 +30,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore
       
     - name: Run tests with coverage
-      run: dotnet test --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
+      run: dotnet test --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
       
     - name: List coverage files (debug)
       if: matrix.os == 'ubuntu-latest'
