@@ -4,29 +4,50 @@
 [![codecov](https://codecov.io/gh/Kydoimos97/FileCombiner/branch/main/graph/badge.svg)](https://codecov.io/gh/Kydoimos97/FileCombiner)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/download)
+[![Release](https://img.shields.io/github/v/release/Kydoimos97/FileCombiner)](https://github.com/Kydoimos97/FileCombiner/releases/latest)
 
 A high-performance .NET CLI tool that combines multiple files from a directory structure into a single reference document. Perfect for code reviews, documentation, or sharing project snapshots with AI assistants.
+
+> **Version 2.1** - Now with simplified CLI, opt-in interactive mode, and comprehensive test coverage (83%+)
 
 ## Features
 
 - **Smart File Discovery**: Recursively scans directories with configurable depth limits
 - **Text Auto-Detection**: Automatically identifies text files vs binary files when using wildcard mode
-- **Rich Filtering**: Support for include/exclude patterns, file size limits, and extension filtering
+- **Rich Filtering**: Support for glob patterns, file size limits, and extension filtering
 - **Language Detection**: Automatic syntax highlighting based on file extensions
-- **Directory Tree Generation**: Optional visual directory structure in output
+- **Directory Tree Generation**: Visual directory structure in output
 - **Multiple Output Modes**: Copy to clipboard (default) or save to file
-- **Compact Mode**: Remove comments and excessive whitespace for cleaner output
+- **Opt-in Interactive Mode**: Simplified 4-question workflow with 60-second timeout
 - **Dry Run Support**: Preview what will be processed before execution
 - **Built-in Safeguards**: Ignores common build directories, caches, and system files
+- **Comprehensive Testing**: 83%+ code coverage with property-based testing
+
+## What's New in v2.1
+
+### v2.1.0 (Latest)
+- **Fixed**: Interactive mode now times out after 60 seconds to prevent deployment locks
+
+### v2.0.0 (Major Release)
+- **Breaking**: Interactive mode is now opt-in via `-i` flag (no longer automatic)
+- **Breaking**: Directory argument is optional (defaults to current directory)
+- **Improved**: Simplified interactive mode from 7 questions to 4 essential questions
+- **Improved**: Better help text and error messages
+- **Fixed**: Service initialization hangs and circular dependencies
+- **Fixed**: Spectre.Console markup escaping issues
+- **Added**: Comprehensive test coverage (83%+) with property-based testing
+- **Added**: Multi-platform releases (Windows, Linux, macOS - x64 and ARM64)
+
+See [CHANGELOG.md](CHANGELOG.md) for complete version history and migration guide.
 
 ## Installation
 
 ### Download Releases
 
-Pre-built binaries are available from the [releases page](../../releases) for:
-- Windows (x64)
-- Linux (x64) 
-- macOS (x64/ARM64)
+Pre-built binaries are available from the [releases page](https://github.com/Kydoimos97/FileCombiner/releases/latest) for:
+- Windows (x64, ARM64)
+- Linux (x64, ARM64) 
+- macOS (x64, ARM64)
 
 ### Build from Source
 
@@ -38,10 +59,10 @@ dotnet publish -c Release -r win-x64 --self-contained
 
 ## Usage
 
-### Basic Usage
+### Quick Start
 
 ```bash
-# Combine all text files in current directory (uses sensible defaults)
+# Combine all text files in current directory (auto-detects text files)
 filecombiner
 
 # Combine files from a specific directory
@@ -56,9 +77,23 @@ filecombiner ./project -o combined-output.md
 # Preview what would be processed (dry run)
 filecombiner ./src --dry-run
 
-# Interactive mode (prompts for configuration)
-filecombiner --interactive
+# Interactive mode with prompts (times out after 60 seconds)
+filecombiner -i
 ```
+
+### What's New in v2.0+
+
+**Breaking Changes:**
+- Interactive mode is now **opt-in** via `-i` flag (was automatic fallback in v1)
+- Directory argument is now **optional** (defaults to current directory)
+- Simplified from 7 questions to 4 essential questions in interactive mode
+
+**Improvements:**
+- Better help text using CommandLine library
+- Fixed Spectre.Console markup escaping issues
+- Resolved service initialization hangs
+- Interactive mode auto-exits after 60 seconds to prevent deployment locks
+- Comprehensive test coverage (83%+) with property-based testing
 
 ### Advanced Options
 
@@ -87,18 +122,27 @@ filecombiner ./src -v
 | `--interactive` | `-i` | Enter interactive mode with prompts | `false` |
 | `--help` | `-h` | Show help message | |
 
-### Deprecated Options (Still Supported)
+### Hidden Options (Backward Compatibility)
 
-The following options are deprecated but still work for backward compatibility:
+The following options are hidden from help but still work for backward compatibility:
 
 - `--include` - Use `--extensions` instead
 - `--ignore-dirs` - Use `--exclude` with directory patterns instead
-- `--compact` - Feature removed
+- `--compact` - Feature removed (rarely used)
 - `--no-tree` - Tree generation is now always included
-- `--max-files` - Now uses default of 1000
-- `--max-file-size` - Now uses default of 10MB
+- `--max-files` - Now uses sensible default of 1000
+- `--max-file-size` - Now uses sensible default of 10MB
 
-See [CHANGELOG.md](CHANGELOG.md) for migration guide.
+**Migration from v1.x:**
+```bash
+# Old v1.x syntax
+filecombiner . --include "*.cs,*.js" --ignore-dirs "bin,obj"
+
+# New v2.x syntax
+filecombiner . --extensions .cs,.js --exclude "**/bin/**,**/obj/**"
+```
+
+See [CHANGELOG.md](CHANGELOG.md) for complete migration guide.
 
 ## Examples
 
@@ -195,8 +239,8 @@ The project includes comprehensive test coverage with xUnit and FsCheck for prop
 # Run all tests
 dotnet test
 
-# Run tests with coverage
-dotnet test --collect:"XPlat Code Coverage"
+# Run tests with coverage (using Coverlet)
+dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
 
 # Run specific test category
 dotnet test --filter "FullyQualifiedName~PathResolutionTests"
@@ -207,8 +251,11 @@ dotnet test --filter "FullyQualifiedName~PathResolutionTests"
 - **Unit Tests**: Core functionality and edge cases
 - **Property-Based Tests**: Correctness guarantees with FsCheck (100+ iterations per property)
 - **Integration Tests**: End-to-end scenarios
+- **Binary File Tests**: Real-world file format testing (CSV, XLSX, PPTX, PDF, DOC, RTF)
 
-Current test coverage: 27 tests covering all critical paths.
+**Current Coverage**: 83.42% line coverage (exceeds 80% target)
+- 27+ test classes covering all critical paths
+- Untestable code (Program.cs entry point, interactive console input) excluded from coverage
 
 ## Contributing
 
