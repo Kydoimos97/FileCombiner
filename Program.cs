@@ -48,10 +48,20 @@ internal class Program
         var options = CommandLineInterface.Parse(args);
         if (options == null) return 1;
 
-        // If interactive mode is requested, run interactive prompts
+        // If interactive mode is requested, run interactive prompts with timeout
         if (options.Interactive)
         {
-            options = CommandLineInterface.RunInteractive();
+            var interactiveTask = Task.Run(() => CommandLineInterface.RunInteractive());
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(60));
+            var completedTask = await Task.WhenAny(interactiveTask, timeoutTask);
+            
+            if (completedTask == timeoutTask)
+            {
+                AnsiConsole.MarkupLine("[yellow]Interactive mode timed out after 60 seconds. Exiting...[/]");
+                return 0;
+            }
+            
+            options = await interactiveTask;
         }
 
         try
