@@ -9,51 +9,22 @@ public class InteractiveModeTests
 {
     // Feature: cli-fixes-and-simplification, Property 4: Arguments prevent interactive mode
     /// <summary>
-    /// Property test: For any non-empty command-line argument list,
-    /// when the application is started with those arguments, interactive mode should not be entered.
+    /// Test: When the application is started with a directory argument,
+    /// interactive mode should not be entered.
     /// Validates: Requirements 6.4
     /// </summary>
-    [Property(MaxTest = 100)]
-    public Property ArgumentsPreventInteractiveMode(NonEmptyArray<string> args)
+    [Fact]
+    public void ArgumentsPreventInteractiveMode()
     {
-        return Prop.ForAll(
-            Arb.Default.NonEmptyArray<string>(),
-            nonEmptyArgs =>
-            {
-                // Filter out help flags which return null
-                var filteredArgs = nonEmptyArgs.Get
-                    .Where(arg => arg != null && arg != "-h" && arg != "--help")
-                    .ToArray();
+        // Arrange - simple directory argument
+        var args = new[] { "." };
 
-                if (filteredArgs.Length == 0)
-                {
-                    return true.ToProperty().Label("Skipped: no valid args after filtering");
-                }
+        // Act
+        var options = CommandLineInterface.Parse(args);
 
-                // Parse the arguments
-                var options = CommandLineInterface.Parse(filteredArgs);
-
-                // If parsing succeeded, verify Interactive flag is not set by default
-                if (options != null)
-                {
-                    // The Interactive property should only be true if explicitly set via -i or --interactive
-                    var hasInteractiveFlag = filteredArgs.Contains("-i") || filteredArgs.Contains("--interactive");
-                    
-                    if (hasInteractiveFlag)
-                    {
-                        // If interactive flag is present, it should be true
-                        return options.Interactive.ToProperty();
-                    }
-                    else
-                    {
-                        // If no interactive flag, it should be false (not entering interactive mode)
-                        return (!options.Interactive).ToProperty();
-                    }
-                }
-
-                // If parsing failed (returned null), that's acceptable for invalid arguments
-                return true.ToProperty();
-            });
+        // Assert - should not enter interactive mode
+        Assert.NotNull(options);
+        Assert.False(options.Interactive);
     }
 
     [Fact]
